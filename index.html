@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ticketz — Cinema Ticket Price Comparison Semarang</title>
+  <meta name="description" content="Ticketz helps you compare cinema ticket prices in Semarang. Find the cheapest place to watch movies across Cinema XXI and Cinepolis.">
+  <link rel="stylesheet" href="styles.css">
+  <!-- Lucide Icons CDN for clean icon set -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+  <!-- Brand Navigation Header -->
+  <header class="header">
+    <div class="header-container">
+      <a href="#" class="brand-logo" title="Ticketz Home">
+        <div class="brand-icon-box">T</div>
+        <div class="brand-title-group">
+          <span class="brand-name">Ticketz</span>
+          <span class="brand-tagline">Cinema Price Comparison</span>
+        </div>
+      </a>
+
+      <div class="header-city-badge">
+        <i data-lucide="map-pin"></i>
+        <span>Semarang, Central Java</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="main-content">
+    
+    <!-- Hero Section -->
+    <section class="hero-banner">
+      <h1 class="hero-title">
+        Where is the cheapest place to watch movies in <span>Semarang</span>?
+      </h1>
+      <p class="hero-subtitle">
+        Compare ticket prices across official cinema locations before you go. Select your preferred cinemas, dates, and movie formats to get verified price differences instantly.
+      </p>
+    </section>
+
+    <!-- Control Panel -->
+    <section class="control-panel">
+      <!-- Cinema Selection Control -->
+      <div class="control-group" style="grid-column: 1 / -1;">
+        <div class="control-label">
+          <span>Compared Cinemas in Semarang</span>
+          <span id="cinemaCountLabel" style="font-weight: 600; text-transform: none; color: var(--brand-burgundy);">2 selected</span>
+        </div>
+        <div class="cinema-selector-box" id="cinemaSelectorBox" title="Click to add or remove cinemas">
+          <div class="selected-chips-container" id="selectedChipsContainer">
+            <!-- Dynamically populated cinema chips -->
+          </div>
+          <button class="btn-primary" id="btnAddCinema" style="padding: 0.4rem 0.85rem; font-size: 0.85rem;">
+            <i data-lucide="plus"></i> Add Cinema
+          </button>
+        </div>
+      </div>
+
+      <!-- Date & Day Selector -->
+      <div class="control-group">
+        <div class="control-label">
+          <span>Date & Day</span>
+          <span id="dayTierBadge" style="font-weight: 700; color: var(--brand-burgundy);">Weekday Rate</span>
+        </div>
+        <input type="date" id="datePicker" class="control-input" />
+      </div>
+
+      <!-- Ticket Format Selector -->
+      <div class="control-group">
+        <div class="control-label">
+          <span>Ticket Format</span>
+        </div>
+        <select id="formatSelect" class="control-select">
+          <!-- Formats populated dynamically -->
+        </select>
+      </div>
+
+      <!-- Movie Selector -->
+      <div class="control-group">
+        <div class="control-label">
+          <span>Movie Filter (Optional)</span>
+        </div>
+        <select id="movieSelect" class="control-select">
+          <!-- Movies populated dynamically -->
+        </select>
+      </div>
+
+      <!-- Presets & Quick Shortcuts -->
+      <div class="preset-bar">
+        <span class="preset-title">Quick Presets:</span>
+        <button class="btn-preset" id="presetTopXXI">XXI Paragon vs XXI DP Mall</button>
+        <button class="btn-preset" id="presetAllChains">Compare XXI vs Cinepolis</button>
+        <button class="btn-preset" id="presetAllSemarang">Compare All 8 Semarang Cinemas</button>
+      </div>
+    </section>
+
+    <!-- Selected Movie Info Card Banner -->
+    <section id="movieBannerContainer" class="movie-banner-container">
+      <!-- Dynamically populated when a specific movie is selected -->
+    </section>
+
+    <!-- Savings & Comparison Banner -->
+    <section class="savings-summary-card" id="savingsSummaryCard">
+      <div class="savings-info">
+        <span class="savings-badge">
+          <i data-lucide="sparkles"></i> Best Value Found
+        </span>
+        <h2 class="savings-headline" id="savingsHeadline">
+          Loading comparison...
+        </h2>
+        <p class="savings-subtext" id="savingsSubtext">
+          Calculating price differences across selected Semarang cinemas...
+        </p>
+      </div>
+      <div class="savings-action-group">
+        <div class="view-toggle">
+          <button class="btn-toggle active" id="btnViewGrid" title="Card Grid View">
+            <i data-lucide="layout-grid"></i> Cards
+          </button>
+          <button class="btn-toggle" id="btnViewTable" title="Table View">
+            <i data-lucide="table"></i> Table
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Comparison View Container -->
+    <section class="comparison-container" id="comparisonContainer">
+      <!-- Dynamically filled with Grid Cards or Table -->
+    </section>
+
+  </main>
+
+  <!-- Cinema Selection Modal Backdrop -->
+  <div class="modal-backdrop" id="cinemaModalBackdrop">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Select Cinemas in Semarang</h3>
+        <button class="btn-close-modal" id="btnCloseCinemaModal">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <input type="text" id="searchCinemaInput" class="modal-search-input" placeholder="Search cinema by name or mall..." />
+        <div class="cinema-list-group" id="modalCinemaList">
+          <!-- List of cinemas rendered dynamically -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-primary" id="btnDoneCinemaModal">Done Selecting</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Transparency & Verification Drawer Modal -->
+  <div class="modal-backdrop" id="verifyModalBackdrop">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Data Transparency & Source Verification</h3>
+        <button class="btn-close-modal" id="btnCloseVerifyModal">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <div class="modal-body" id="verifyModalContent">
+        <!-- Verification details inserted dynamically -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="btnOkVerifyModal">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-brand">
+        <div class="brand-logo">
+          <div class="brand-icon-box">T</div>
+          <span class="brand-name">Ticketz</span>
+        </div>
+        <p class="footer-text">
+          Ticketz is a modern, independent price comparison tool for cinema tickets in Semarang. We prioritize data accuracy and transparency to help moviegoers make informed choices.
+        </p>
+      </div>
+
+      <div class="footer-links">
+        <h4 class="footer-heading">Coverage</h4>
+        <a href="#">Cinema XXI Semarang (Paragon, DP Mall, Transmart Majapahit, Queen City, etc.)</a>
+        <a href="#">Cinepolis Java Supermall & Uptown BSB</a>
+      </div>
+
+      <div class="footer-links">
+        <h4 class="footer-heading">Data & Transparency</h4>
+        <a href="#">Official 21Cineplex Data Source</a>
+        <a href="#">Official Cinepolis Data Source</a>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      &copy; 2026 Ticketz. All rights reserved. Semarang Cinema Price Comparison Platform.
+    </div>
+  </footer>
+
+  <!-- App Application Script (ES Module) -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>
