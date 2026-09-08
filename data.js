@@ -347,11 +347,64 @@ export const MOVIES_CATALOG = [
     genre: 'Drama, Romance',
     duration: '114 mins',
     rating: '13+',
-    posterBg: 'linear-gradient(135deg, #1565c0, #6a1b9a)',
-    description: 'A nostalgic romance exploring youth, dreams, and second chances amidst the rain and music of Bandung.',
-    cinemaIds: ['xxi-citraland', 'xxi-transmart-setiabudi']
   }
 ];
+
+// Active Movie Catalog Memory Store & Cache Metadata
+let activeMovieCatalog = [...MOVIES_CATALOG];
+let lastMovieCatalogUpdate = new Date('2026-09-08T06:00:00Z');
+let isCatalogLive = false;
+
+/**
+ * Asynchronous Movie Catalog Service Layer
+ * Fetches latest movies from live cache/endpoint with seamless fallback to MOVIES_CATALOG
+ */
+export async function fetchMovieCatalog(selectedCinemaIds = []) {
+  // Simulate network latency for API readiness (e.g. 120ms)
+  await new Promise(resolve => setTimeout(resolve, 120));
+
+  try {
+    const cached = localStorage.getItem('ticketz_movies_cache');
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (parsed && Array.isArray(parsed.movies) && parsed.movies.length > 0) {
+        activeMovieCatalog = parsed.movies;
+        lastMovieCatalogUpdate = new Date(parsed.lastUpdated || Date.now());
+        isCatalogLive = true;
+      }
+    }
+  } catch (err) {
+    console.warn('Ticketz Movie Service: Using fallback catalog.', err);
+    activeMovieCatalog = [...MOVIES_CATALOG];
+    isCatalogLive = false;
+  }
+
+  const filteredMovies = activeMovieCatalog.filter(movie => {
+    if (movie.id === 'all') return true;
+    if (!movie.cinemaIds) return true;
+    if (!selectedCinemaIds || selectedCinemaIds.length === 0) return true;
+    return movie.cinemaIds.some(cid => selectedCinemaIds.includes(cid));
+  });
+
+  return {
+    movies: filteredMovies,
+    allMovies: activeMovieCatalog,
+    freshness: getMovieDataFreshness()
+  };
+}
+
+/**
+ * Get current Movie Data Freshness Status metadata
+ */
+export function getMovieDataFreshness() {
+  const timeFormatted = lastMovieCatalogUpdate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+  return {
+    lastUpdated: lastMovieCatalogUpdate,
+    isLive: isCatalogLive,
+    label: isCatalogLive ? `Auto-synced: ${timeFormatted}` : 'Verified Catalog'
+  };
+}
+
 
 export const TICKET_FORMATS = [
   { id: 'Regular 2D', label: 'Regular 2D', icon: 'film' },

@@ -7,7 +7,9 @@ import {
   MOVIES_CATALOG,
   TICKET_FORMATS,
   getDayTier,
-  formatRupiah
+  formatRupiah,
+  fetchMovieCatalog,
+  getMovieDataFreshness
 } from './data.js';
 
 // Application State
@@ -26,6 +28,7 @@ const elements = {
   dayTierBadge: document.getElementById('dayTierBadge'),
   formatSelect: document.getElementById('formatSelect'),
   movieSelect: document.getElementById('movieSelect'),
+  movieSyncStatus: document.getElementById('movieSyncStatus'),
   selectedChipsContainer: document.getElementById('selectedChipsContainer'),
   cinemaCountLabel: document.getElementById('cinemaCountLabel'),
   cinemaSelectorBox: document.getElementById('cinemaSelectorBox'),
@@ -82,35 +85,39 @@ function setupDatePicker() {
 /**
  * Populate Format & Movie Select Dropdowns
  */
-function populateDropdowns() {
+async function populateDropdowns() {
   // Formats
   elements.formatSelect.innerHTML = TICKET_FORMATS.map(f => 
     `<option value="${f.id}" ${f.id === state.selectedFormat ? 'selected' : ''}>${f.label}</option>`
   ).join('');
 
-  populateMovieDropdown();
+  await populateMovieDropdown();
 }
 
 /**
- * Filter and populate movie select dropdown based on selected cinema locations
+ * Filter and populate movie select dropdown based on selected cinema locations asynchronously
  */
-function populateMovieDropdown() {
+async function populateMovieDropdown() {
   if (!elements.movieSelect) return;
 
-  const filteredMovies = MOVIES_CATALOG.filter(movie => {
-    if (movie.id === 'all') return true;
-    if (!movie.cinemaIds) return true;
-    return movie.cinemaIds.some(cid => state.selectedCinemaIds.includes(cid));
-  });
+  if (elements.movieSyncStatus) {
+    elements.movieSyncStatus.textContent = 'Syncing...';
+  }
 
-  const isStillAvailable = filteredMovies.some(m => m.id === state.selectedMovieId);
+  const { movies, freshness } = await fetchMovieCatalog(state.selectedCinemaIds);
+
+  const isStillAvailable = movies.some(m => m.id === state.selectedMovieId);
   if (!isStillAvailable) {
     state.selectedMovieId = 'all';
   }
 
-  elements.movieSelect.innerHTML = filteredMovies.map(m => 
+  elements.movieSelect.innerHTML = movies.map(m => 
     `<option value="${m.id}" ${m.id === state.selectedMovieId ? 'selected' : ''}>${m.title}</option>`
   ).join('');
+
+  if (elements.movieSyncStatus) {
+    elements.movieSyncStatus.textContent = freshness.label;
+  }
 }
 
 /**
@@ -295,10 +302,10 @@ function renderModalCinemaList() {
 /**
  * Main Render Pipeline
  */
-function render() {
+async function render() {
   renderDayTierBadge();
   renderSelectedChips();
-  populateMovieDropdown();
+  await populateMovieDropdown();
   renderMovieBanner();
   renderComparisonView();
   
