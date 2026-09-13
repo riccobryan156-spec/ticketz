@@ -111,9 +111,14 @@ async function populateMovieDropdown() {
     state.selectedMovieId = 'all';
   }
 
-  elements.movieSelect.innerHTML = movies.map(m => 
+  const optionsHtml = movies.map(m => 
     `<option value="${m.id}" ${m.id === state.selectedMovieId ? 'selected' : ''}>${m.title}</option>`
   ).join('');
+
+  if (elements.movieSelect.innerHTML !== optionsHtml) {
+    elements.movieSelect.innerHTML = optionsHtml;
+  }
+  elements.movieSelect.value = state.selectedMovieId;
 
   if (elements.movieSyncStatus) {
     elements.movieSyncStatus.textContent = freshness.label;
@@ -416,11 +421,27 @@ function renderComparisonView() {
   const tier = dayTierObj.tier; // 'weekday' | 'friday' | 'weekend'
   const format = state.selectedFormat;
 
+  const selectedMovie = MOVIES_CATALOG.find(m => m.id === state.selectedMovieId);
+
   // Process pricing data for selected cinemas
   const items = state.selectedCinemaIds.map(cid => {
     const cinema = SEMARANG_CINEMAS.find(c => c.id === cid);
-    const formatPricing = cinema.pricing[format];
 
+    // 1. Movie schedule availability check
+    if (selectedMovie && selectedMovie.id !== 'all' && selectedMovie.cinemaIds) {
+      const isMovieShowing = selectedMovie.cinemaIds.includes(cid);
+      if (!isMovieShowing) {
+        return {
+          cinema,
+          price: null,
+          available: false,
+          reason: `Not scheduled at this cinema`
+        };
+      }
+    }
+
+    // 2. Format availability check
+    const formatPricing = cinema ? cinema.pricing[format] : null;
     if (!formatPricing) {
       return {
         cinema,
@@ -445,7 +466,6 @@ function renderComparisonView() {
   const cheapestItem = validItems.length > 0 ? validItems[0] : null;
   const mostExpensiveItem = validItems.length > 0 ? validItems[validItems.length - 1] : null;
 
-  const selectedMovie = MOVIES_CATALOG.find(m => m.id === state.selectedMovieId);
   const movieTagStr = (selectedMovie && selectedMovie.id !== 'all') ? ` for "${selectedMovie.title}"` : '';
 
   // Update Savings Summary Banner
@@ -455,15 +475,25 @@ function renderComparisonView() {
       elements.savingsHeadline.textContent = `${cheapestItem.cinema.shortName} is the cheapest option${movieTagStr} at ${formatRupiah(cheapestItem.price)}!`;
       elements.savingsSubtext.textContent = `Save ${formatRupiah(diff)} per ticket compared to ${mostExpensiveItem.cinema.shortName} (${formatRupiah(mostExpensiveItem.price)}) on ${dayTierObj.label}.`;
     } else {
-      elements.savingsHeadline.textContent = `All selected cinemas have equal pricing${movieTagStr} at ${formatRupiah(cheapestItem.price)}.`;
+      elements.savingsHeadline.textContent = `All showing cinemas have equal pricing${movieTagStr} at ${formatRupiah(cheapestItem.price)}.`;
       elements.savingsSubtext.textContent = `Standard price for ${format} on ${dayTierObj.label} across your selected locations.`;
     }
   } else if (cheapestItem) {
-    elements.savingsHeadline.textContent = `${cheapestItem.cinema.shortName} ticket price${movieTagStr}: ${formatRupiah(cheapestItem.price)}`;
-    elements.savingsSubtext.textContent = `Showing verified price for ${format} on ${dayTierObj.label}. Add more cinemas to compare savings!`;
+    if (items.length > 1) {
+      elements.savingsHeadline.textContent = `${cheapestItem.cinema.shortName} is the only selected cinema showing${movieTagStr} in ${format} format at ${formatRupiah(cheapestItem.price)}.`;
+      elements.savingsSubtext.textContent = `Other selected cinemas do not have this movie or format scheduled on ${dayTierObj.label}.`;
+    } else {
+      elements.savingsHeadline.textContent = `${cheapestItem.cinema.shortName} ticket price${movieTagStr}: ${formatRupiah(cheapestItem.price)}`;
+      elements.savingsSubtext.textContent = `Showing verified price for ${format} on ${dayTierObj.label}. Add more cinemas to compare savings!`;
+    }
   } else {
-    elements.savingsHeadline.textContent = `Format ${format} unavailable for current selection.`;
-    elements.savingsSubtext.textContent = `Please select a different format (e.g. Regular 2D) or change your cinema selection.`;
+    if (selectedMovie && selectedMovie.id !== 'all') {
+      elements.savingsHeadline.textContent = `"${selectedMovie.title}" is not showing in ${format} format at selected cinemas.`;
+      elements.savingsSubtext.textContent = `Try selecting different cinemas or switching ticket format (e.g. Regular 2D).`;
+    } else {
+      elements.savingsHeadline.textContent = `Format ${format} unavailable for current selection.`;
+      elements.savingsSubtext.textContent = `Please select a different format (e.g. Regular 2D) or change your cinema selection.`;
+    }
   }
 
   // Render Layout Mode

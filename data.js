@@ -347,6 +347,9 @@ export const MOVIES_CATALOG = [
     genre: 'Drama, Romance',
     duration: '114 mins',
     rating: '13+',
+    posterBg: 'linear-gradient(135deg, #00695c, #2e7d32)',
+    description: 'A poignant romance set against the nostalgic backdrop of Bandung, exploring lost love and second chances.',
+    cinemaIds: ['xxi-queen-city', 'xxi-transmart-setiabudi', 'cinepolis-java-supermall']
   }
 ];
 
@@ -364,13 +367,23 @@ export async function fetchMovieCatalog(selectedCinemaIds = []) {
   await new Promise(resolve => setTimeout(resolve, 120));
 
   try {
-    const cached = localStorage.getItem('ticketz_movies_cache');
-    if (cached) {
-      const parsed = JSON.parse(cached);
-      if (parsed && Array.isArray(parsed.movies) && parsed.movies.length > 0) {
-        activeMovieCatalog = parsed.movies;
-        lastMovieCatalogUpdate = new Date(parsed.lastUpdated || Date.now());
+    const res = await fetch('./movies-latest.json').catch(() => null);
+    if (res && res.ok) {
+      const data = await res.json();
+      if (data && Array.isArray(data.movies) && data.movies.length > 0) {
+        activeMovieCatalog = data.movies;
+        lastMovieCatalogUpdate = new Date(data.lastUpdated || Date.now());
         isCatalogLive = true;
+      }
+    } else {
+      const cached = localStorage.getItem('ticketz_movies_cache');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed && Array.isArray(parsed.movies) && parsed.movies.length > 0) {
+          activeMovieCatalog = parsed.movies;
+          lastMovieCatalogUpdate = new Date(parsed.lastUpdated || Date.now());
+          isCatalogLive = true;
+        }
       }
     }
   } catch (err) {
